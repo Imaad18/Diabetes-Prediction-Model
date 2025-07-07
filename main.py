@@ -1,4 +1,4 @@
-import streamlit as st
+vimport streamlit as st
 import pandas as pd
 import numpy as np
 import pickle
@@ -21,128 +21,507 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for better styling
+# Advanced CSS styling
 def inject_css():
     st.markdown("""
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        /* Global Variables */
+        :root {
+            --primary-color: #6366f1;
+            --primary-light: #8b5cf6;
+            --primary-dark: #4f46e5;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #f59e0b;
+            --info-color: #06b6d4;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --text-primary: #f8fafc;
+            --text-secondary: #cbd5e1;
+            --border-color: #334155;
+            --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-success: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --gradient-danger: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        /* Dark theme setup */
+        .stApp {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: var(--text-primary);
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Hide Streamlit branding */
+        #MainMenu {visibility: hidden;}
+        footer {visibility: hidden;}
+        header {visibility: hidden;}
+        .stDeployButton {display: none;}
+        
+        /* Enhanced Header */
         .main-header {
-            font-size: 3rem;
-            color: #1f77b4 !important;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-size: 3.5rem;
+            font-weight: 700;
             text-align: center;
-            margin-bottom: 2rem;
-            font-weight: bold;
+            margin: 2rem 0;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
         }
+        
+        .main-header::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100px;
+            height: 4px;
+            background: var(--gradient-primary);
+            border-radius: 2px;
+        }
+        
+        /* Advanced Card Styling */
         .metric-card {
-            background-color: #f0f2f6 !important;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border-left: 4px solid #1f77b4 !important;
+            background: rgba(30, 41, 59, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 1.5rem;
             margin: 1rem 0;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
         }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--gradient-primary);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+        
+        /* Prediction Result Cards */
         .prediction-positive {
-            background-color: #ffebee !important;
-            color: #c62828 !important;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            border-left: 4px solid #c62828 !important;
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.1) 100%);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
             margin: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
         }
+        
+        .prediction-positive::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ef4444, #dc2626);
+        }
+        
         .prediction-negative {
-            background-color: #e8f5e8 !important;
-            color: #2e7d32 !important;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            border-left: 4px solid #2e7d32 !important;
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(5, 150, 105, 0.1) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 16px;
+            padding: 2rem;
             margin: 1rem 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
         }
+        
+        .prediction-negative::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #10b981, #059669);
+        }
+        
+        /* Info Boxes */
         .info-box {
-            background-color: #e3f2fd !important;
-            color: #1565c0 !important;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border-left: 4px solid #1565c0 !important;
+            background: rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
             margin: 1rem 0;
+            backdrop-filter: blur(10px);
         }
+        
         .warning-box {
-            background-color: #fff3e0 !important;
-            color: #e65100 !important;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border-left: 4px solid #e65100 !important;
+            background: rgba(245, 158, 11, 0.1);
+            border: 1px solid rgba(245, 158, 11, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
             margin: 1rem 0;
+            backdrop-filter: blur(10px);
         }
+        
         .success-box {
-            background-color: #e8f5e8 !important;
-            color: #2e7d32 !important;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            border-left: 4px solid #2e7d32 !important;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
             margin: 1rem 0;
+            backdrop-filter: blur(10px);
         }
-        /* Sidebar styling */
-        .css-1d391kg {
-            background-color: #f8f9fa !important;
+        
+        /* Sidebar Enhancements */
+        .css-1d391kg, .css-1cypcdb, .css-17eq0hr {
+            background: linear-gradient(180deg, #1e293b 0%, #334155 100%) !important;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
         }
-        /* Main content area */
-        .main .block-container {
-            padding-top: 2rem;
+        
+        .css-1d391kg .css-1v0mbdj {
+            background: transparent !important;
         }
-        /* Metrics styling */
-        div[data-testid="metric-container"] {
-            background-color: #f8f9fa !important;
-            border: 1px solid #dee2e6 !important;
-            padding: 1rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-        }
-        /* Button styling */
+        
+        /* Button Styling */
         .stButton > button {
-            background-color: #1f77b4 !important;
+            background: var(--gradient-primary) !important;
             color: white !important;
             border: none !important;
-            border-radius: 0.5rem !important;
-            padding: 0.75rem 1.5rem !important;
-            font-weight: bold !important;
+            border-radius: 12px !important;
+            padding: 0.75rem 2rem !important;
+            font-weight: 600 !important;
+            font-size: 1rem !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+        
+        .stButton > button:hover {
+            transform: translateY(-2px) !important;
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2) !important;
+        }
+        
+        .stButton > button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .stButton > button:hover::before {
+            left: 100%;
+        }
+        
+        /* Metrics Enhancement */
+        div[data-testid="metric-container"] {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 16px !important;
+            padding: 1.5rem !important;
+            box-shadow: var(--shadow-lg) !important;
+            backdrop-filter: blur(10px) !important;
             transition: all 0.3s ease !important;
         }
-        .stButton > button:hover {
-            background-color: #1565c0 !important;
+        
+        div[data-testid="metric-container"]:hover {
             transform: translateY(-2px) !important;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+            box-shadow: var(--shadow-xl) !important;
+            border-color: rgba(255, 255, 255, 0.2) !important;
         }
-        /* File uploader styling */
-        .stFileUploader > div > div > div > div {
-            background-color: #f8f9fa !important;
-            border: 2px dashed #1f77b4 !important;
-            border-radius: 0.5rem !important;
+        
+        div[data-testid="metric-container"] > div {
+            color: var(--text-primary) !important;
         }
-        /* Slider styling */
+        
+        div[data-testid="metric-container"] label {
+            color: var(--text-secondary) !important;
+            font-weight: 500 !important;
+        }
+        
+        /* Slider Enhancements */
         .stSlider > div > div > div > div {
-            background-color: #1f77b4 !important;
+            background: var(--gradient-primary) !important;
         }
-        /* Selectbox styling */
-        .stSelectbox > div > div > div {
-            background-color: #f8f9fa !important;
+        
+        .stSlider > div > div > div[role="slider"] {
+            background: white !important;
+            border: 3px solid var(--primary-color) !important;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
         }
-        /* Dataframe styling */
+        
+        /* Selectbox Styling */
+        .stSelectbox > div > div {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+            color: var(--text-primary) !important;
+        }
+        
+        /* File Uploader */
+        .stFileUploader > div > div {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border: 2px dashed var(--primary-color) !important;
+            border-radius: 16px !important;
+            padding: 2rem !important;
+            transition: all 0.3s ease !important;
+        }
+        
+        .stFileUploader > div > div:hover {
+            border-color: var(--primary-light) !important;
+            background: rgba(30, 41, 59, 0.9) !important;
+        }
+        
+        /* Dataframe Styling */
         .stDataFrame {
-            border: 1px solid #dee2e6 !important;
-            border-radius: 0.5rem !important;
+            background: rgba(30, 41, 59, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 16px !important;
+            overflow: hidden !important;
         }
-        /* Header styling */
-        h1, h2, h3 {
-            color: #1f77b4 !important;
+        
+        .stDataFrame table {
+            background: transparent !important;
+            color: var(--text-primary) !important;
         }
-        /* Markdown text styling */
-        .markdown-text-container {
-            color: #495057 !important;
+        
+        .stDataFrame th {
+            background: rgba(99, 102, 241, 0.1) !important;
+            color: var(--text-primary) !important;
+            font-weight: 600 !important;
+        }
+        
+        .stDataFrame td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        }
+        
+        /* Headers */
+        h1, h2, h3, h4, h5, h6 {
+            color: var(--text-primary) !important;
+            font-weight: 600 !important;
+        }
+        
+        /* Multiselect */
+        .stMultiSelect > div > div {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+        }
+        
+        .stMultiSelect span {
+            color: var(--text-primary) !important;
+        }
+        
+        /* Progress bars */
+        .stProgress > div > div {
+            background: var(--gradient-primary) !important;
+        }
+        
+        /* Tabs */
+        .stTabs [data-baseweb="tab-list"] {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border-radius: 12px !important;
+            padding: 0.5rem !important;
+        }
+        
+        .stTabs [data-baseweb="tab"] {
+            background: transparent !important;
+            color: var(--text-secondary) !important;
+            border-radius: 8px !important;
+            padding: 0.5rem 1rem !important;
+            font-weight: 500 !important;
+        }
+        
+        .stTabs [data-baseweb="tab"][aria-selected="true"] {
+            background: var(--gradient-primary) !important;
+            color: white !important;
+        }
+        
+        /* Plotly charts background */
+        .js-plotly-plot {
+            background: rgba(30, 41, 59, 0.4) !important;
+            border-radius: 16px !important;
+            padding: 1rem !important;
+        }
+        
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateX(-20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        .metric-card, .prediction-positive, .prediction-negative {
+            animation: fadeIn 0.5s ease-out;
+        }
+        
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(30, 41, 59, 0.4);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--gradient-primary);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-dark);
+        }
+        
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .main-header {
+                font-size: 2.5rem;
+            }
+            
+            .metric-card, .prediction-positive, .prediction-negative {
+                padding: 1rem;
+            }
+        }
+        
+        /* Loading animations */
+        .loading-spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--primary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Enhanced tooltips */
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 125%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 0.5rem;
+            border-radius: 4px;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s;
+        }
+        
+        .tooltip:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        /* Floating elements */
+        .float-element {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--gradient-primary);
+            color: white;
+            padding: 1rem;
+            border-radius: 50%;
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        /* Enhanced form styling */
+        .stTextInput > div > div {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border: 1px solid rgba(255, 255, 255, 0.1) !important;
+            border-radius: 12px !important;
+            color: var(--text-primary) !important;
+        }
+        
+        .stTextInput > div > div:focus-within {
+            border-color: var(--primary-color) !important;
+            box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2) !important;
+        }
+        
+        /* Enhanced navigation */
+        .nav-item {
+            padding: 0.75rem 1rem;
+            margin: 0.25rem 0;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .nav-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            transform: translateX(5px);
+        }
+        
+        .nav-item.active {
+            background: var(--gradient-primary);
+            color: white;
         }
     </style>
     """, unsafe_allow_html=True)
 
 inject_css()
+
+# Enhanced theme colors for plots
+PLOT_THEME = {
+    'background': 'rgba(15, 23, 42, 0.8)',
+    'paper_bgcolor': 'rgba(15, 23, 42, 0.8)',
+    'plot_bgcolor': 'rgba(30, 41, 59, 0.4)',
+    'font_color': '#f8fafc',
+    'grid_color': 'rgba(255, 255, 255, 0.1)',
+    'primary_color': '#6366f1',
+    'success_color': '#10b981',
+    'danger_color': '#ef4444',
+    'warning_color': '#f59e0b',
+}
 
 # Load and prepare data
 @st.cache_data
@@ -176,16 +555,13 @@ def load_model(df):
         return model
     except:
         # If no model exists, train a new one
-        # Prepare features and target
         X = df.drop('Outcome', axis=1)
         y = df['Outcome']
         
-        # Split the data
         X_train, X_test, y_train, y_test = train_test_split(
             X, y, test_size=0.2, random_state=42, stratify=y
         )
         
-        # Train the model
         model = RandomForestClassifier(
             n_estimators=100,
             random_state=42,
@@ -195,12 +571,11 @@ def load_model(df):
         )
         model.fit(X_train, y_train)
         
-        # Save the model for next time
         try:
             with open('diabetes_model.pkl', 'wb') as f:
                 pickle.dump(model, f)
         except:
-            pass  # If we can't save, that's okay
+            pass
         
         return model
 
@@ -234,47 +609,392 @@ def get_data_stats(df):
         'diabetic_percentage': (diabetic_patients / total_patients) * 100
     }
 
-# Main app
-def main():
-    # Apply custom CSS
-    inject_css()
+# Enhanced plotting functions
+def create_styled_plot(fig, title=""):
+    """Apply consistent styling to plots"""
+    fig.update_layout(
+        paper_bgcolor=PLOT_THEME['paper_bgcolor'],
+        plot_bgcolor=PLOT_THEME['plot_bgcolor'],
+        font=dict(color=PLOT_THEME['font_color'], family="Inter"),
+        title=dict(
+            text=title,
+            font=dict(size=20, weight='bold'),
+            x=0.5,
+            xanchor='center'
+        ),
+        showlegend=True,
+        legend=dict(
+            bgcolor="rgba(30, 41, 59, 0.8)",
+            bordercolor="rgba(255, 255, 255, 0.1)",
+            borderwidth=1
+        ),
+        xaxis=dict(
+            gridcolor=PLOT_THEME['grid_color'],
+            zeroline=False
+        ),
+        yaxis=dict(
+            gridcolor=PLOT_THEME['grid_color'],
+            zeroline=False
+        ),
+        margin=dict(l=20, r=20, t=60, b=20)
+    )
+    return fig
+
+def show_prediction_page(model, df):
+    """Show the prediction page with input form and results"""
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2>🎯 Diabetes Risk Assessment</h2>
+        <p style="color: #cbd5e1;">Enter patient details to assess diabetes risk</p>
+    </div>
+    """, unsafe_allow_html=True)
     
-    # Header
-    st.markdown('<h1 class="main-header">🩺 Diabetes Prediction App</h1>', unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
     
-    # File uploader in sidebar
-    st.sidebar.title("📁 Upload Dataset")
-    uploaded_file = st.sidebar.file_uploader(
-        "Choose a CSV file",
-        type=['csv'],
-        help="Upload a diabetes dataset CSV file with the required columns"
+    with col1:
+        st.markdown("### 📝 Patient Information")
+        pregnancies = st.slider("Pregnancies", 0, 20, 1)
+        glucose = st.slider("Glucose (mg/dL)", 0, 200, 100)
+        blood_pressure = st.slider("Blood Pressure (mm Hg)", 0, 130, 70)
+        skin_thickness = st.slider("Skin Thickness (mm)", 0, 100, 20)
+        
+    with col2:
+        st.markdown("### 📊 Health Metrics")
+        insulin = st.slider("Insulin (mu U/ml)", 0, 850, 80)
+        bmi = st.slider("BMI", 0.0, 70.0, 25.0, step=0.1)
+        diabetes_pedigree = st.slider("Diabetes Pedigree Function", 0.0, 2.5, 0.4, step=0.01)
+        age = st.slider("Age (years)", 20, 100, 30)
+    
+    # Prediction button
+    if st.button("🔮 Predict Diabetes Risk", use_container_width=True):
+        # Create input array
+        input_data = np.array([[
+            pregnancies, glucose, blood_pressure, skin_thickness,
+            insulin, bmi, diabetes_pedigree, age
+        ]])
+        
+        # Make prediction
+        prediction = model.predict(input_data)
+        probability = model.predict_proba(input_data)[0][1] * 100
+        
+        # Display results
+        if prediction[0] == 1:
+            st.markdown(f"""
+            <div class="prediction-positive">
+                <h2 style="color: #ef4444;">⚠️ High Diabetes Risk Detected</h2>
+                <p style="font-size: 1.2rem;">Probability: <strong>{probability:.1f}%</strong></p>
+                <p>This patient shows significant risk factors for diabetes. Consider recommending:</p>
+                <ul>
+                    <li>Further diagnostic tests (HbA1c, fasting glucose)</li>
+                    <li>Lifestyle modifications (diet, exercise)</li>
+                    <li>Consultation with an endocrinologist</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        else:
+            st.markdown(f"""
+            <div class="prediction-negative">
+                <h2 style="color: #10b981;">✅ Low Diabetes Risk</h2>
+                <p style="font-size: 1.2rem;">Probability: <strong>{probability:.1f}%</strong></p>
+                <p>This patient shows no significant risk factors for diabetes. Consider:</p>
+                <ul>
+                    <li>Regular health checkups</li>
+                    <li>Maintaining healthy lifestyle</li>
+                    <li>Periodic glucose monitoring if risk factors change</li>
+                </ul>
+            </div>
+            """, unsafe_allow_html=True)
+        
+        # Show probability meter
+        st.markdown("### 📈 Risk Probability")
+        fig = go.Figure(go.Indicator(
+            mode = "gauge+number",
+            value = probability,
+            domain = {'x': [0, 1], 'y': [0, 1]},
+            title = {'text': "Diabetes Risk Probability (%)"},
+            gauge = {
+                'axis': {'range': [0, 100]},
+                'bar': {'color': "#6366f1"},
+                'steps': [
+                    {'range': [0, 30], 'color': "#10b981"},
+                    {'range': [30, 70], 'color': "#f59e0b"},
+                    {'range': [70, 100], 'color': "#ef4444"}],
+                'threshold': {
+                    'line': {'color': "white", 'width': 4},
+                    'thickness': 0.75,
+                    'value': probability}
+            }
+        ))
+        
+        fig = create_styled_plot(fig)
+        st.plotly_chart(fig, use_container_width=True)
+
+def show_data_analysis_page(df, stats):
+    """Show data analysis and visualization page"""
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2>📊 Dataset Analysis</h2>
+        <p style="color: #cbd5e1;">Explore the diabetes dataset characteristics</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Show dataset overview
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric("Total Patients", f"{stats['total']:,}")
+    with col2:
+        st.metric("Diabetic Patients", f"{stats['diabetic']:,}", f"{stats['diabetic_percentage']:.1f}%")
+    with col3:
+        st.metric("Non-Diabetic Patients", f"{stats['non_diabetic']:,}", 
+                 f"{(100 - stats['diabetic_percentage']):.1f}%")
+    
+    # Show dataset sample
+    st.markdown("### 📋 Dataset Sample")
+    st.dataframe(df.head(10), use_container_width=True)
+    
+    # Distribution plots
+    st.markdown("### 📈 Feature Distributions")
+    
+    tab1, tab2, tab3 = st.tabs(["📊 Numeric Features", "📈 Outcome Comparison", "🌡️ Correlation"])
+    
+    with tab1:
+        selected_feature = st.selectbox(
+            "Select a feature to visualize",
+            df.drop('Outcome', axis=1).columns,
+            key="feature_dist"
+        )
+        
+        fig = px.histogram(
+            df, 
+            x=selected_feature, 
+            nbins=30,
+            marginal="box",
+            title=f"Distribution of {selected_feature}",
+            color_discrete_sequence=[PLOT_THEME['primary_color']]
+        )
+        fig = create_styled_plot(fig)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with tab2:
+        selected_feature = st.selectbox(
+            "Select a feature to compare",
+            df.drop('Outcome', axis=1).columns,
+            key="feature_compare"
+        )
+        
+        fig = px.box(
+            df,
+            x='Outcome',
+            y=selected_feature,
+            color='Outcome',
+            title=f"{selected_feature} by Diabetes Outcome",
+            color_discrete_map={0: PLOT_THEME['success_color'], 1: PLOT_THEME['danger_color']}
+        )
+        fig = create_styled_plot(fig)
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with tab3:
+        corr = df.corr()
+        fig = px.imshow(
+            corr,
+            text_auto=True,
+            aspect="auto",
+            color_continuous_scale='Blues',
+            title="Feature Correlation Matrix"
+        )
+        fig = create_styled_plot(fig)
+        st.plotly_chart(fig, use_container_width=True)
+
+def show_model_insights_page(model, df):
+    """Show model performance and feature importance"""
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2>🔍 Model Insights</h2>
+        <p style="color: #cbd5e1;">Understand how the model makes predictions</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Split data for evaluation
+    X = df.drop('Outcome', axis=1)
+    y = df['Outcome']
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.2, random_state=42, stratify=y
     )
     
+    # Model evaluation
+    st.markdown("### 🎯 Model Performance")
+    
+    col1, col2 = st.columns(2)
+    
+    with col1:
+        # Train accuracy
+        train_preds = model.predict(X_train)
+        train_acc = accuracy_score(y_train, train_preds)
+        st.metric("Training Accuracy", f"{train_acc:.1%}")
+        
+        # Confusion matrix
+        st.markdown("#### Confusion Matrix (Test Set)")
+        test_preds = model.predict(X_test)
+        cm = confusion_matrix(y_test, test_preds)
+        
+        fig = px.imshow(
+            cm,
+            text_auto=True,
+            labels=dict(x="Predicted", y="Actual", color="Count"),
+            x=['No Diabetes', 'Diabetes'],
+            y=['No Diabetes', 'Diabetes'],
+            color_continuous_scale='Blues'
+        )
+        fig = create_styled_plot(fig, "Confusion Matrix")
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with col2:
+        # Test accuracy
+        test_acc = accuracy_score(y_test, test_preds)
+        st.metric("Test Accuracy", f"{test_acc:.1%}")
+        
+        # Classification report
+        st.markdown("#### Classification Report (Test Set)")
+        report = classification_report(y_test, test_preds, output_dict=True)
+        report_df = pd.DataFrame(report).transpose()
+        st.dataframe(report_df, use_container_width=True)
+    
+    # Feature importance
+    st.markdown("### 📊 Feature Importance")
+    importance_df = get_feature_importance(df)
+    
+    fig = px.bar(
+        importance_df,
+        x='Importance',
+        y='Feature',
+        orientation='h',
+        title="Feature Importance Scores",
+        color='Importance',
+        color_continuous_scale='Blues'
+    )
+    fig = create_styled_plot(fig)
+    st.plotly_chart(fig, use_container_width=True)
+    
+    # Decision path explanation
+    st.markdown("### 🤖 How the Model Makes Decisions")
+    st.markdown("""
+    The Random Forest model makes predictions by:
+    
+    1. **Analyzing multiple decision trees**: Each tree votes on the outcome
+    2. **Considering feature importance**: More important features have greater influence
+    3. **Averaging predictions**: The final prediction is based on majority vote
+    
+    Key factors in diabetes prediction:
+    - Glucose levels are typically the most important predictor
+    - BMI and Age also contribute significantly
+    - Other factors provide additional context
+    """)
+
+def show_about_page():
+    """Show information about the app"""
+    st.markdown("""
+    <div style="text-align: center; margin-bottom: 2rem;">
+        <h2>ℹ️ About This App</h2>
+        <p style="color: #cbd5e1;">Learn about the diabetes prediction model</p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.markdown("""
+    ## 🎯 Diabetes Prediction App
+    
+    This application uses machine learning to predict the likelihood of diabetes based on patient health metrics.
+    
+    ### 🔧 How It Works
+    
+    1. **Data Input**: Users can upload a CSV file with patient health data
+    2. **Model Prediction**: The app uses a trained Random Forest classifier
+    3. **Results Visualization**: Predictions are displayed with probabilities and explanations
+    
+    ### 🧠 Model Details
+    
+    - **Algorithm**: Random Forest Classifier
+    - **Features Used**: 8 health metrics (Glucose, BMI, Age, etc.)
+    - **Accuracy**: ~75-80% on test data (varies by dataset)
+    
+    ### ⚠️ Important Notes
+    
+    - This tool is for **educational purposes only**
+    - Not a substitute for professional medical advice
+    - Always consult healthcare professionals for medical decisions
+    
+    ### 📚 References
+    
+    - [Diabetes Dataset Source](https://www.kaggle.com/uciml/pima-indians-diabetes-database)
+    - [Random Forest Documentation](https://scikit-learn.org/stable/modules/generated/sklearn.ensemble.RandomForestClassifier.html)
+    - [Streamlit Documentation](https://docs.streamlit.io/)
+    
+    ### 👨‍💻 Developer
+    
+    This app was developed using:
+    - Python 3
+    - Streamlit
+    - Scikit-learn
+    - Plotly
+    
+    For questions or feedback, please contact the developer.
+    """)
+
+# Main app
+def main():
+    inject_css()
+    
+    # Enhanced header with animation
+    st.markdown('''
+    <div style="text-align: center; padding: 2rem 0;">
+        <h1 class="main-header">🩺 Diabetes Prediction App</h1>
+        <p style="color: #cbd5e1; font-size: 1.2rem; margin-top: 1rem;">
+            Advanced ML-powered diabetes risk assessment
+        </p>
+    </div>
+    ''', unsafe_allow_html=True)
+    
+    # Enhanced sidebar
+    with st.sidebar:
+        st.markdown("""
+        <div style="text-align: center; padding: 1rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <h2 style="color: #6366f1; font-weight: 600;">🔬 Control Panel</h2>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.markdown("### 📁 Upload Dataset")
+        uploaded_file = st.file_uploader(
+            "Choose a CSV file",
+            type=['csv'],
+            help="Upload a diabetes dataset CSV file with the required columns"
+        )
+    
     if uploaded_file is not None:
-        # Load data and model
         df = load_data(uploaded_file)
         model = load_model(df)
         stats = get_data_stats(df)
         
-        # Show dataset info
-        st.sidebar.markdown("""
-        <div class="success-box">
-            <strong>✅ Dataset loaded successfully!</strong>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.sidebar.markdown(f"""
-        <div class="info-box">
-            <strong>📊 {len(df)} records loaded</strong>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Navigation
-        st.sidebar.title("Navigation")
-        page = st.sidebar.selectbox(
-            "Choose a page",
-            ["🎯 Prediction", "📊 Data Analysis", "🔍 Model Insights", "ℹ️ About"]
-        )
+        with st.sidebar:
+            st.markdown("""
+            <div class="success-box">
+                <strong>✅ Dataset loaded successfully!</strong>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown(f"""
+            <div class="metric-card">
+                <h4>📊 Dataset Overview</h4>
+                <p><strong>{len(df):,}</strong> total records</p>
+                <p><strong>{stats['diabetic']:,}</strong> diabetic cases</p>
+                <p><strong>{stats['diabetic_percentage']:.1f}%</strong> diabetes rate</p>
+            </div>
+            """, unsafe_allow_html=True)
+            
+            st.markdown("### 🧭 Navigation")
+            page = st.selectbox(
+                "Choose a page",
+                ["🎯 Prediction", "📊 Data Analysis", "🔍 Model Insights", "ℹ️ About"],
+                key="navigation"
+            )
         
         if page == "🎯 Prediction":
             show_prediction_page(model, df)
@@ -285,476 +1005,7 @@ def main():
         elif page == "ℹ️ About":
             show_about_page()
     else:
-        # Show instructions when no file is uploaded
-        st.markdown("""
-        <div class="info-box">
-            <h3>👆 Please upload a CSV file to get started!</h3>
-        </div>
-        """, unsafe_allow_html=True)
-        
-        st.markdown("""
-        ## 📋 Getting Started
-        
-        To use this diabetes prediction app, you need to upload a CSV file containing diabetes data.
-        
-        ### 📊 Required CSV Format
-        Your CSV file should contain the following columns:
-        
-        | Column Name | Description | Type |
-        |-------------|-------------|------|
-        | **Pregnancies** | Number of times pregnant | Integer |
-        | **Glucose** | Plasma glucose concentration (mg/dL) | Float |
-        | **BloodPressure** | Diastolic blood pressure (mm Hg) | Float |
-        | **SkinThickness** | Triceps skin fold thickness (mm) | Float |
-        | **Insulin** | 2-Hour serum insulin (mu U/ml) | Float |
-        | **BMI** | Body mass index (kg/m²) | Float |
-        | **DiabetesPedigreeFunction** | Diabetes likelihood function | Float |
-        | **Age** | Age in years | Integer |
-        | **Outcome** | 0 = No Diabetes, 1 = Diabetes | Integer |
-        
-        ### 📁 Sample Data Format
-        ```csv
-        Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin,BMI,DiabetesPedigreeFunction,Age,Outcome
-        6,148,72,35,0,33.6,0.627,50,1
-        1,85,66,29,0,26.6,0.351,31,0
-        8,183,64,0,0,23.3,0.672,32,1
-        ```
-        
-        ### 🔍 Where to Find Data
-        - **Pima Indians Diabetes Dataset**: Available on Kaggle and UCI ML Repository
-        - **Custom Dataset**: Create your own with the required columns
-        - **Sample Data**: Generate synthetic data for testing
-        
-        Once you upload a valid CSV file, you'll be able to:
-        - 🎯 Make diabetes predictions
-        - 📊 Analyze the dataset
-        - 🔍 Explore model performance
-        - ℹ️ Learn about the methodology
-        """)
-        
-        # Sample data download
-        st.subheader("📥 Download Sample Dataset")
-        
-        st.markdown("""
-        <div class="warning-box">
-            <strong>💡 Tip:</strong> Download the sample dataset below to test the app functionality
-        </div>
-        """, unsafe_allow_html=True)
-        
-        # Create a sample dataset
-        sample_data = {
-            'Pregnancies': [6, 1, 8, 1, 0, 5, 3, 10, 2, 8],
-            'Glucose': [148, 85, 183, 89, 137, 116, 78, 115, 197, 125],
-            'BloodPressure': [72, 66, 64, 66, 40, 74, 50, 0, 70, 96],
-            'SkinThickness': [35, 29, 0, 23, 35, 0, 32, 0, 45, 0],
-            'Insulin': [0, 0, 0, 94, 168, 0, 88, 0, 543, 0],
-            'BMI': [33.6, 26.6, 23.3, 28.1, 43.1, 25.6, 31.0, 35.3, 30.5, 0.0],
-            'DiabetesPedigreeFunction': [0.627, 0.351, 0.672, 0.167, 2.288, 0.201, 0.248, 0.134, 0.158, 0.232],
-            'Age': [50, 31, 32, 21, 33, 30, 26, 29, 53, 54],
-            'Outcome': [1, 0, 1, 0, 1, 0, 1, 0, 1, 1]
-        }
-        
-        sample_df = pd.DataFrame(sample_data)
-        
-        # Display sample data
-        st.write("**Sample Dataset Preview:**")
-        st.dataframe(sample_df, use_container_width=True)
-        
-        # Download button
-        csv_data = sample_df.to_csv(index=False)
-        st.download_button(
-            label="📥 Download Sample CSV",
-            data=csv_data,
-            file_name="sample_diabetes_data.csv",
-            mime="text/csv",
-            help="Download this sample dataset to test the app"
-        )
-
-def show_prediction_page(model, df):
-    """Show the main prediction interface"""
-    st.header("🎯 Diabetes Risk Prediction")
-    
-    col1, col2 = st.columns([1, 2])
-    
-    with col1:
-        st.subheader("📋 Patient Information")
-        
-        # Input features
-        pregnancies = st.slider('Number of Pregnancies', 0, 17, 1, help="Number of times pregnant")
-        glucose = st.slider('Glucose Level (mg/dL)', 0, 200, 120, help="Plasma glucose concentration")
-        blood_pressure = st.slider('Blood Pressure (mm Hg)', 0, 122, 70, help="Diastolic blood pressure")
-        skin_thickness = st.slider('Skin Thickness (mm)', 0, 99, 20, help="Triceps skin fold thickness")
-        insulin = st.slider('Insulin Level (mu U/ml)', 0, 846, 79, help="2-Hour serum insulin")
-        bmi = st.slider('BMI (kg/m²)', 0.0, 67.1, 25.0, help="Body mass index")
-        dpf = st.slider('Diabetes Pedigree Function', 0.078, 2.42, 0.3725, help="Diabetes likelihood based on family history")
-        age = st.slider('Age (years)', 21, 81, 30, help="Age in years")
-        
-        # Create input dataframe
-        input_data = pd.DataFrame({
-            'Pregnancies': [pregnancies],
-            'Glucose': [glucose],
-            'BloodPressure': [blood_pressure],
-            'SkinThickness': [skin_thickness],
-            'Insulin': [insulin],
-            'BMI': [bmi],
-            'DiabetesPedigreeFunction': [dpf],
-            'Age': [age]
-        })
-        
-        # Prediction button
-        if st.button("🔍 Predict Diabetes Risk", type="primary"):
-            prediction = model.predict(input_data)[0]
-            prediction_proba = model.predict_proba(input_data)[0]
-            
-            # Store results in session state
-            st.session_state.prediction = prediction
-            st.session_state.prediction_proba = prediction_proba
-            st.session_state.input_data = input_data
-    
-    with col2:
-        st.subheader("📊 Prediction Results")
-        
-        if hasattr(st.session_state, 'prediction'):
-            prediction = st.session_state.prediction
-            prediction_proba = st.session_state.prediction_proba
-            input_data = st.session_state.input_data
-            
-            # Display prediction
-            if prediction == 1:
-                st.markdown(f'''
-                <div class="prediction-positive">
-                    <h3>⚠️ High Risk of Diabetes</h3>
-                    <p>The model predicts a <strong>{prediction_proba[1]*100:.1f}%</strong> probability of diabetes.</p>
-                </div>
-                ''', unsafe_allow_html=True)
-                
-                # Risk recommendations
-                st.subheader("🎯 Recommendations")
-                st.markdown("""
-                <div class="warning-box">
-                    <ul>
-                        <li>🏥 <strong>Consult a healthcare provider</strong> for proper diagnosis and treatment</li>
-                        <li>🥗 <strong>Monitor diet</strong>: Reduce sugar and refined carbs</li>
-                        <li>🏃 <strong>Increase physical activity</strong>: At least 150 minutes per week</li>
-                        <li>⚖️ <strong>Maintain healthy weight</strong>: If BMI is high</li>
-                        <li>🩺 <strong>Regular health check-ups</strong>: Monitor blood glucose levels</li>
-                    </ul>
-                </div>
-                """, unsafe_allow_html=True)
-            else:
-                st.markdown(f'''
-                <div class="prediction-negative">
-                    <h3>✅ Low Risk of Diabetes</h3>
-                    <p>The model predicts a <strong>{prediction_proba[0]*100:.1f}%</strong> probability of no diabetes.</p>
-                </div>
-                ''', unsafe_allow_html=True)
-                
-                # Prevention recommendations
-                st.subheader("🛡️ Prevention Tips")
-                st.markdown("""
-                <div class="success-box">
-                    <ul>
-                        <li>🥗 <strong>Maintain healthy diet</strong>: Continue balanced nutrition</li>
-                        <li>🏃 <strong>Stay active</strong>: Regular exercise is key</li>
-                        <li>⚖️ <strong>Monitor weight</strong>: Keep BMI in healthy range</li>
-                        <li>🩺 <strong>Regular check-ups</strong>: Annual health screenings</li>
-                        <li>🚭 <strong>Avoid smoking</strong>: Reduces diabetes risk</li>
-                    </ul>
-                </div>
-                """, unsafe_allow_html=True)
-            
-            # Probability visualization
-            st.subheader("📈 Probability Breakdown")
-            
-            prob_df = pd.DataFrame({
-                'Outcome': ['No Diabetes', 'Diabetes'],
-                'Probability': [prediction_proba[0], prediction_proba[1]]
-            })
-            
-            fig = px.bar(
-                prob_df, 
-                x='Outcome', 
-                y='Probability',
-                color='Outcome',
-                color_discrete_map={'No Diabetes': '#2e7d32', 'Diabetes': '#c62828'},
-                title="Prediction Probabilities"
-            )
-            fig.update_layout(showlegend=False, height=400)
-            st.plotly_chart(fig, use_container_width=True)
-            
-            # Display input summary
-            st.subheader("📋 Input Summary")
-            st.dataframe(input_data.T, use_container_width=True)
-            
-        else:
-            st.markdown("""
-            <div class="info-box">
-                <h4>👆 Please enter patient information and click 'Predict' to see results.</h4>
-            </div>
-            """, unsafe_allow_html=True)
-
-def show_data_analysis_page(df, stats):
-    """Show data analysis and visualizations"""
-    st.header("📊 Dataset Analysis")
-    
-    # Dataset overview
-    col1, col2, col3, col4 = st.columns(4)
-    
-    with col1:
-        st.metric(
-            label="Total Patients",
-            value=stats['total']
-        )
-    
-    with col2:
-        st.metric(
-            label="Diabetic Cases",
-            value=stats['diabetic']
-        )
-    
-    with col3:
-        st.metric(
-            label="Non-Diabetic Cases",
-            value=stats['non_diabetic']
-        )
-    
-    with col4:
-        st.metric(
-            label="Diabetes Rate",
-            value=f"{stats['diabetic_percentage']:.1f}%"
-        )
-    
-    # Outcome distribution
-    st.subheader("🎯 Outcome Distribution")
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Pie chart
-        fig_pie = px.pie(
-            values=[stats['non_diabetic'], stats['diabetic']],
-            names=['No Diabetes', 'Diabetes'],
-            title="Diabetes Distribution",
-            color_discrete_map={'No Diabetes': '#2e7d32', 'Diabetes': '#c62828'}
-        )
-        st.plotly_chart(fig_pie, use_container_width=True)
-    
-    with col2:
-        # Bar chart
-        outcome_counts = df['Outcome'].value_counts()
-        fig_bar = px.bar(
-            x=['No Diabetes', 'Diabetes'],
-            y=[outcome_counts[0], outcome_counts[1]],
-            color=['No Diabetes', 'Diabetes'],
-            color_discrete_map={'No Diabetes': '#2e7d32', 'Diabetes': '#c62828'},
-            title="Case Counts"
-        )
-        fig_bar.update_layout(showlegend=False)
-        st.plotly_chart(fig_bar, use_container_width=True)
-    
-    # Feature distributions
-    st.subheader("📈 Feature Distributions")
-    
-    # Select features to visualize
-    numeric_columns = df.select_dtypes(include=[np.number]).columns.tolist()
-    numeric_columns.remove('Outcome')
-    
-    selected_features = st.multiselect(
-        "Select features to visualize:",
-        numeric_columns,
-        default=numeric_columns[:4]
-    )
-    
-    if selected_features:
-        # Create subplots
-        fig = make_subplots(
-            rows=2, cols=2,
-            subplot_titles=selected_features[:4],
-            specs=[[{"secondary_y": False}, {"secondary_y": False}],
-                   [{"secondary_y": False}, {"secondary_y": False}]]
-        )
-        
-        colors = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728']
-        
-        for i, feature in enumerate(selected_features[:4]):
-            row = i // 2 + 1
-            col = i % 2 + 1
-            
-            # Histogram for each outcome
-            for outcome in [0, 1]:
-                data = df[df['Outcome'] == outcome][feature]
-                fig.add_histogram(
-                    x=data,
-                    name=f"{'Diabetes' if outcome == 1 else 'No Diabetes'}",
-                    row=row, col=col,
-                    showlegend=(i == 0),
-                    opacity=0.7,
-                    marker_color='#c62828' if outcome == 1 else '#2e7d32'
-                )
-        
-        fig.update_layout(height=600, title_text="Feature Distributions by Outcome")
-        st.plotly_chart(fig, use_container_width=True)
-    
-    # Correlation matrix
-    st.subheader("🔗 Feature Correlations")
-    
-    corr_matrix = df.corr()
-    fig_corr = px.imshow(
-        corr_matrix,
-        color_continuous_scale='RdBu',
-        aspect="auto",
-        title="Feature Correlation Matrix"
-    )
-    fig_corr.update_layout(height=500)
-    st.plotly_chart(fig_corr, use_container_width=True)
-    
-    # Statistical summary
-    st.subheader("📊 Statistical Summary")
-    st.dataframe(df.describe(), use_container_width=True)
-
-def show_model_insights_page(model, df):
-    """Show model performance and insights"""
-    st.header("🔍 Model Performance & Insights")
-    
-    # Feature importance
-    st.subheader("⭐ Feature Importance")
-    
-    importance_df = get_feature_importance(df)
-    
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        # Bar chart
-        fig_importance = px.bar(
-            importance_df,
-            x='Importance',
-            y='Feature',
-            orientation='h',
-            title="Feature Importance Ranking",
-            color='Importance',
-            color_continuous_scale='viridis'
-        )
-        fig_importance.update_layout(height=500)
-        st.plotly_chart(fig_importance, use_container_width=True)
-    
-    with col2:
-        # Table
-        st.subheader("📋 Importance Values")
-        importance_df['Importance'] = importance_df['Importance'].round(4)
-        st.dataframe(importance_df, use_container_width=True, hide_index=True)
-    
-    # Model performance metrics
-    st.subheader("📊 Model Performance")
-    
-    # Get model predictions on full dataset for demonstration
-    X = df.drop('Outcome', axis=1)
-    y = df['Outcome']
-    
-    # Split data
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
-    
-    # Get predictions
-    y_pred = model.predict(X_test)
-    accuracy = accuracy_score(y_test, y_pred)
-    
-    col1, col2, col3 = st.columns(3)
-    
-    with col1:
-        st.metric("Accuracy", f"{accuracy:.3f}")
-    
-    with col2:
-        st.metric("Test Samples", len(y_test))
-    
-    with col3:
-        st.metric("Features Used", len(X.columns))
-    
-    # Confusion matrix
-    st.subheader("🎯 Confusion Matrix")
-    
-    cm = confusion_matrix(y_test, y_pred)
-    
-    fig_cm = px.imshow(
-        cm,
-        labels=dict(x="Predicted", y="Actual"),
-        x=['No Diabetes', 'Diabetes'],
-        y=['No Diabetes', 'Diabetes'],
-        color_continuous_scale='Blues',
-        title="Confusion Matrix"
-    )
-    
-    # Add text annotations
-    for i in range(len(cm)):
-        for j in range(len(cm[0])):
-            fig_cm.add_annotation(
-                x=j, y=i,
-                text=str(cm[i][j]),
-                showarrow=False,
-                font=dict(color="white" if cm[i][j] > cm.max()/2 else "black")
-            )
-    
-    st.plotly_chart(fig_cm, use_container_width=True)
-    
-    # Classification report
-    st.subheader("📈 Classification Report")
-    
-    report = classification_report(y_test, y_pred, output_dict=True)
-    report_df = pd.DataFrame(report).transpose()
-    st.dataframe(report_df.round(3), use_container_width=True)
-
-def show_about_page():
-    """Show information about the app and dataset"""
-    st.header("ℹ️ About This App")
-    
-    st.markdown("""
-    ## 🩺 Diabetes Prediction App
-    
-    This application uses machine learning to predict the likelihood of diabetes based on various health metrics.
-    
-    ### 📊 Dataset Information
-    - **Source**: Pima Indians Diabetes Dataset
-    - **Total Records**: 768 patients
-    - **Features**: 8 health-related measurements
-    - **Target**: Diabetes outcome (0 = No Diabetes, 1 = Diabetes)
-    
-    ### 🔬 Features Used
-    1. **Pregnancies**: Number of times pregnant
-    2. **Glucose**: Plasma glucose concentration (mg/dL)
-    3. **Blood Pressure**: Diastolic blood pressure (mm Hg)
-    4. **Skin Thickness**: Triceps skin fold thickness (mm)
-    5. **Insulin**: 2-Hour serum insulin (mu U/ml)
-    6. **BMI**: Body mass index (kg/m²)
-    7. **Diabetes Pedigree Function**: Likelihood based on family history
-    8. **Age**: Age in years
-    
-    ### 🤖 Machine Learning Model
-    - **Algorithm**: Random Forest Classifier
-    - **Training Method**: Supervised learning
-    - **Validation**: Train-test split (80/20)
-    - **Performance**: Accuracy metrics available in Model Insights
-    
-    ### ⚠️ Important Disclaimers
-    - This app is for **educational purposes only**
-    - **Not a substitute** for professional medical advice
-    - Always consult healthcare providers for medical decisions
-    - Results should not be used for self-diagnosis
-    
-    ### 🔧 Technical Details
-    - Built with Streamlit and scikit-learn
-    - Interactive visualizations using Plotly
-    - Responsive design for various screen sizes
-    - Cached models for improved performance
-    
-    ### 👨‍💻 Usage Tips
-    1. Use the **Prediction** page for individual risk assessment
-    2. Explore the **Data Analysis** page to understand the dataset
-    3. Check **Model Insights** for performance metrics
-    4. Adjust input parameters to see how they affect predictions
-    
-    ### 📚 Learn More
-    - [Diabetes Information - CDC](https://www.cdc.gov/diabetes/)
-    - [Machine Learning in Healthcare](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6616181/)
-    - [Pima Indians Diabetes Dataset](https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database)
-    """)
+        show_welcome_page()
 
 if __name__ == "__main__":
     main()
