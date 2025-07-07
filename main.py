@@ -22,36 +22,127 @@ st.set_page_config(
 )
 
 # Custom CSS for better styling
-st.markdown("""
-<style>
-    .main-header {
-        font-size: 3rem;
-        color: #1f77b4;
-        text-align: center;
-        margin-bottom: 2rem;
-    }
-    .metric-card {
-        background-color: #f0f2f6;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #1f77b4;
-    }
-    .prediction-positive {
-        background-color: #ffebee;
-        color: #c62828;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #c62828;
-    }
-    .prediction-negative {
-        background-color: #e8f5e8;
-        color: #2e7d32;
-        padding: 1rem;
-        border-radius: 0.5rem;
-        border-left: 4px solid #2e7d32;
-    }
-</style>
-""", unsafe_allow_html=True)
+def inject_css():
+    st.markdown("""
+    <style>
+        .main-header {
+            font-size: 3rem;
+            color: #1f77b4 !important;
+            text-align: center;
+            margin-bottom: 2rem;
+            font-weight: bold;
+        }
+        .metric-card {
+            background-color: #f0f2f6 !important;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #1f77b4 !important;
+            margin: 1rem 0;
+        }
+        .prediction-positive {
+            background-color: #ffebee !important;
+            color: #c62828 !important;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #c62828 !important;
+            margin: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .prediction-negative {
+            background-color: #e8f5e8 !important;
+            color: #2e7d32 !important;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #2e7d32 !important;
+            margin: 1rem 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .info-box {
+            background-color: #e3f2fd !important;
+            color: #1565c0 !important;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #1565c0 !important;
+            margin: 1rem 0;
+        }
+        .warning-box {
+            background-color: #fff3e0 !important;
+            color: #e65100 !important;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #e65100 !important;
+            margin: 1rem 0;
+        }
+        .success-box {
+            background-color: #e8f5e8 !important;
+            color: #2e7d32 !important;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            border-left: 4px solid #2e7d32 !important;
+            margin: 1rem 0;
+        }
+        /* Sidebar styling */
+        .css-1d391kg {
+            background-color: #f8f9fa !important;
+        }
+        /* Main content area */
+        .main .block-container {
+            padding-top: 2rem;
+        }
+        /* Metrics styling */
+        div[data-testid="metric-container"] {
+            background-color: #f8f9fa !important;
+            border: 1px solid #dee2e6 !important;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        /* Button styling */
+        .stButton > button {
+            background-color: #1f77b4 !important;
+            color: white !important;
+            border: none !important;
+            border-radius: 0.5rem !important;
+            padding: 0.75rem 1.5rem !important;
+            font-weight: bold !important;
+            transition: all 0.3s ease !important;
+        }
+        .stButton > button:hover {
+            background-color: #1565c0 !important;
+            transform: translateY(-2px) !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
+        }
+        /* File uploader styling */
+        .stFileUploader > div > div > div > div {
+            background-color: #f8f9fa !important;
+            border: 2px dashed #1f77b4 !important;
+            border-radius: 0.5rem !important;
+        }
+        /* Slider styling */
+        .stSlider > div > div > div > div {
+            background-color: #1f77b4 !important;
+        }
+        /* Selectbox styling */
+        .stSelectbox > div > div > div {
+            background-color: #f8f9fa !important;
+        }
+        /* Dataframe styling */
+        .stDataFrame {
+            border: 1px solid #dee2e6 !important;
+            border-radius: 0.5rem !important;
+        }
+        /* Header styling */
+        h1, h2, h3 {
+            color: #1f77b4 !important;
+        }
+        /* Markdown text styling */
+        .markdown-text-container {
+            color: #495057 !important;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+
+inject_css()
 
 # Load and prepare data
 @st.cache_data
@@ -145,6 +236,9 @@ def get_data_stats(df):
 
 # Main app
 def main():
+    # Apply custom CSS
+    inject_css()
+    
     # Header
     st.markdown('<h1 class="main-header">🩺 Diabetes Prediction App</h1>', unsafe_allow_html=True)
     
@@ -163,8 +257,17 @@ def main():
         stats = get_data_stats(df)
         
         # Show dataset info
-        st.sidebar.success(f"✅ Dataset loaded successfully!")
-        st.sidebar.info(f"📊 {len(df)} records loaded")
+        st.sidebar.markdown("""
+        <div class="success-box">
+            <strong>✅ Dataset loaded successfully!</strong>
+        </div>
+        """, unsafe_allow_html=True)
+        
+        st.sidebar.markdown(f"""
+        <div class="info-box">
+            <strong>📊 {len(df)} records loaded</strong>
+        </div>
+        """, unsafe_allow_html=True)
         
         # Navigation
         st.sidebar.title("Navigation")
@@ -183,7 +286,11 @@ def main():
             show_about_page()
     else:
         # Show instructions when no file is uploaded
-        st.info("👆 Please upload a CSV file to get started!")
+        st.markdown("""
+        <div class="info-box">
+            <h3>👆 Please upload a CSV file to get started!</h3>
+        </div>
+        """, unsafe_allow_html=True)
         
         st.markdown("""
         ## 📋 Getting Started
@@ -227,6 +334,12 @@ def main():
         
         # Sample data download
         st.subheader("📥 Download Sample Dataset")
+        
+        st.markdown("""
+        <div class="warning-box">
+            <strong>💡 Tip:</strong> Download the sample dataset below to test the app functionality
+        </div>
+        """, unsafe_allow_html=True)
         
         # Create a sample dataset
         sample_data = {
@@ -317,13 +430,17 @@ def show_prediction_page(model, df):
                 
                 # Risk recommendations
                 st.subheader("🎯 Recommendations")
-                st.write("""
-                - 🏥 **Consult a healthcare provider** for proper diagnosis and treatment
-                - 🥗 **Monitor diet**: Reduce sugar and refined carbs
-                - 🏃 **Increase physical activity**: At least 150 minutes per week
-                - ⚖️ **Maintain healthy weight**: If BMI is high
-                - 🩺 **Regular health check-ups**: Monitor blood glucose levels
-                """)
+                st.markdown("""
+                <div class="warning-box">
+                    <ul>
+                        <li>🏥 <strong>Consult a healthcare provider</strong> for proper diagnosis and treatment</li>
+                        <li>🥗 <strong>Monitor diet</strong>: Reduce sugar and refined carbs</li>
+                        <li>🏃 <strong>Increase physical activity</strong>: At least 150 minutes per week</li>
+                        <li>⚖️ <strong>Maintain healthy weight</strong>: If BMI is high</li>
+                        <li>🩺 <strong>Regular health check-ups</strong>: Monitor blood glucose levels</li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
             else:
                 st.markdown(f'''
                 <div class="prediction-negative">
@@ -334,13 +451,17 @@ def show_prediction_page(model, df):
                 
                 # Prevention recommendations
                 st.subheader("🛡️ Prevention Tips")
-                st.write("""
-                - 🥗 **Maintain healthy diet**: Continue balanced nutrition
-                - 🏃 **Stay active**: Regular exercise is key
-                - ⚖️ **Monitor weight**: Keep BMI in healthy range
-                - 🩺 **Regular check-ups**: Annual health screenings
-                - 🚭 **Avoid smoking**: Reduces diabetes risk
-                """)
+                st.markdown("""
+                <div class="success-box">
+                    <ul>
+                        <li>🥗 <strong>Maintain healthy diet</strong>: Continue balanced nutrition</li>
+                        <li>🏃 <strong>Stay active</strong>: Regular exercise is key</li>
+                        <li>⚖️ <strong>Monitor weight</strong>: Keep BMI in healthy range</li>
+                        <li>🩺 <strong>Regular check-ups</strong>: Annual health screenings</li>
+                        <li>🚭 <strong>Avoid smoking</strong>: Reduces diabetes risk</li>
+                    </ul>
+                </div>
+                """, unsafe_allow_html=True)
             
             # Probability visualization
             st.subheader("📈 Probability Breakdown")
@@ -366,7 +487,11 @@ def show_prediction_page(model, df):
             st.dataframe(input_data.T, use_container_width=True)
             
         else:
-            st.info("👆 Please enter patient information and click 'Predict' to see results.")
+            st.markdown("""
+            <div class="info-box">
+                <h4>👆 Please enter patient information and click 'Predict' to see results.</h4>
+            </div>
+            """, unsafe_allow_html=True)
 
 def show_data_analysis_page(df, stats):
     """Show data analysis and visualizations"""
