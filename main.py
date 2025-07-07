@@ -55,21 +55,28 @@ st.markdown("""
 
 # Load and prepare data
 @st.cache_data
-def load_data():
-    """Load the diabetes dataset"""
+def load_data(uploaded_file):
+    """Load the diabetes dataset from uploaded file"""
     try:
-        df = pd.read_csv('diabetes.csv')
+        df = pd.read_csv(uploaded_file)
+        
+        # Validate required columns
+        required_columns = ['Pregnancies', 'Glucose', 'BloodPressure', 'SkinThickness', 
+                          'Insulin', 'BMI', 'DiabetesPedigreeFunction', 'Age', 'Outcome']
+        
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            st.error(f"❌ Missing required columns: {missing_columns}")
+            st.stop()
+        
         return df
-    except FileNotFoundError:
-        st.error("❌ diabetes.csv file not found. Please ensure the file is in the same directory as this script.")
-        st.stop()
     except Exception as e:
         st.error(f"❌ Error loading data: {str(e)}")
         st.stop()
 
 # Train and cache model
 @st.cache_resource
-def load_model():
+def load_model(df):
     """Load or train the diabetes prediction model"""
     try:
         # Try to load a pre-trained model
@@ -78,8 +85,6 @@ def load_model():
         return model
     except:
         # If no model exists, train a new one
-        df = load_data()
-        
         # Prepare features and target
         X = df.drop('Outcome', axis=1)
         y = df['Outcome']
@@ -110,10 +115,9 @@ def load_model():
 
 # Feature importance analysis
 @st.cache_data
-def get_feature_importance():
+def get_feature_importance(df):
     """Get feature importance from the model"""
-    model = load_model()
-    df = load_data()
+    model = load_model(df)
     feature_names = df.drop('Outcome', axis=1).columns
     importance = model.feature_importances_
     
@@ -126,9 +130,8 @@ def get_feature_importance():
 
 # Data statistics
 @st.cache_data
-def get_data_stats():
+def get_data_stats(df):
     """Get basic statistics about the dataset"""
-    df = load_data()
     total_patients = len(df)
     diabetic_patients = df['Outcome'].sum()
     non_diabetic_patients = total_patients - diabetic_patients
@@ -145,26 +148,114 @@ def main():
     # Header
     st.markdown('<h1 class="main-header">🩺 Diabetes Prediction App</h1>', unsafe_allow_html=True)
     
-    # Load data and model
-    df = load_data()
-    model = load_model()
-    stats = get_data_stats()
-    
-    # Sidebar for navigation
-    st.sidebar.title("Navigation")
-    page = st.sidebar.selectbox(
-        "Choose a page",
-        ["🎯 Prediction", "📊 Data Analysis", "🔍 Model Insights", "ℹ️ About"]
+    # File uploader in sidebar
+    st.sidebar.title("📁 Upload Dataset")
+    uploaded_file = st.sidebar.file_uploader(
+        "Choose a CSV file",
+        type=['csv'],
+        help="Upload a diabetes dataset CSV file with the required columns"
     )
     
-    if page == "🎯 Prediction":
-        show_prediction_page(model, df)
-    elif page == "📊 Data Analysis":
-        show_data_analysis_page(df, stats)
-    elif page == "🔍 Model Insights":
-        show_model_insights_page(model, df)
-    elif page == "ℹ️ About":
-        show_about_page()
+    if uploaded_file is not None:
+        # Load data and model
+        df = load_data(uploaded_file)
+        model = load_model(df)
+        stats = get_data_stats(df)
+        
+        # Show dataset info
+        st.sidebar.success(f"✅ Dataset loaded successfully!")
+        st.sidebar.info(f"📊 {len(df)} records loaded")
+        
+        # Navigation
+        st.sidebar.title("Navigation")
+        page = st.sidebar.selectbox(
+            "Choose a page",
+            ["🎯 Prediction", "📊 Data Analysis", "🔍 Model Insights", "ℹ️ About"]
+        )
+        
+        if page == "🎯 Prediction":
+            show_prediction_page(model, df)
+        elif page == "📊 Data Analysis":
+            show_data_analysis_page(df, stats)
+        elif page == "🔍 Model Insights":
+            show_model_insights_page(model, df)
+        elif page == "ℹ️ About":
+            show_about_page()
+    else:
+        # Show instructions when no file is uploaded
+        st.info("👆 Please upload a CSV file to get started!")
+        
+        st.markdown("""
+        ## 📋 Getting Started
+        
+        To use this diabetes prediction app, you need to upload a CSV file containing diabetes data.
+        
+        ### 📊 Required CSV Format
+        Your CSV file should contain the following columns:
+        
+        | Column Name | Description | Type |
+        |-------------|-------------|------|
+        | **Pregnancies** | Number of times pregnant | Integer |
+        | **Glucose** | Plasma glucose concentration (mg/dL) | Float |
+        | **BloodPressure** | Diastolic blood pressure (mm Hg) | Float |
+        | **SkinThickness** | Triceps skin fold thickness (mm) | Float |
+        | **Insulin** | 2-Hour serum insulin (mu U/ml) | Float |
+        | **BMI** | Body mass index (kg/m²) | Float |
+        | **DiabetesPedigreeFunction** | Diabetes likelihood function | Float |
+        | **Age** | Age in years | Integer |
+        | **Outcome** | 0 = No Diabetes, 1 = Diabetes | Integer |
+        
+        ### 📁 Sample Data Format
+        ```csv
+        Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin,BMI,DiabetesPedigreeFunction,Age,Outcome
+        6,148,72,35,0,33.6,0.627,50,1
+        1,85,66,29,0,26.6,0.351,31,0
+        8,183,64,0,0,23.3,0.672,32,1
+        ```
+        
+        ### 🔍 Where to Find Data
+        - **Pima Indians Diabetes Dataset**: Available on Kaggle and UCI ML Repository
+        - **Custom Dataset**: Create your own with the required columns
+        - **Sample Data**: Generate synthetic data for testing
+        
+        Once you upload a valid CSV file, you'll be able to:
+        - 🎯 Make diabetes predictions
+        - 📊 Analyze the dataset
+        - 🔍 Explore model performance
+        - ℹ️ Learn about the methodology
+        """)
+        
+        # Sample data download
+        st.subheader("📥 Download Sample Dataset")
+        
+        # Create a sample dataset
+        sample_data = {
+            'Pregnancies': [6, 1, 8, 1, 0, 5, 3, 10, 2, 8],
+            'Glucose': [148, 85, 183, 89, 137, 116, 78, 115, 197, 125],
+            'BloodPressure': [72, 66, 64, 66, 40, 74, 50, 0, 70, 96],
+            'SkinThickness': [35, 29, 0, 23, 35, 0, 32, 0, 45, 0],
+            'Insulin': [0, 0, 0, 94, 168, 0, 88, 0, 543, 0],
+            'BMI': [33.6, 26.6, 23.3, 28.1, 43.1, 25.6, 31.0, 35.3, 30.5, 0.0],
+            'DiabetesPedigreeFunction': [0.627, 0.351, 0.672, 0.167, 2.288, 0.201, 0.248, 0.134, 0.158, 0.232],
+            'Age': [50, 31, 32, 21, 33, 30, 26, 29, 53, 54],
+            'Outcome': [1, 0, 1, 0, 1, 0, 1, 0, 1, 1]
+        }
+        
+        sample_df = pd.DataFrame(sample_data)
+        
+        # Display sample data
+        st.write("**Sample Dataset Preview:**")
+        st.dataframe(sample_df, use_container_width=True)
+        
+        # Download button
+        csv_data = sample_df.to_csv(index=False)
+        st.download_button(
+            label="📥 Download Sample CSV",
+            data=csv_data,
+            file_name="sample_diabetes_data.csv",
+            mime="text/csv",
+            help="Download this sample dataset to test the app"
+        )
 
 def show_prediction_page(model, df):
     """Show the main prediction interface"""
@@ -403,7 +494,7 @@ def show_model_insights_page(model, df):
     # Feature importance
     st.subheader("⭐ Feature Importance")
     
-    importance_df = get_feature_importance()
+    importance_df = get_feature_importance(df)
     
     col1, col2 = st.columns(2)
     
