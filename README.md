@@ -44,6 +44,11 @@ This application empowers healthcare professionals and individuals to:
 
 ---
 
+## To get Dataset link:
+https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database
+
+
+
 ## 🚀 Getting Started
 
 ### 🔧 Prerequisites
@@ -65,5 +70,3 @@ source venv/bin/activate  # On Windows use: venv\Scripts\activate
 pip install -r requirements.txt
 
 
-## To get Dataset link:
-https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database
