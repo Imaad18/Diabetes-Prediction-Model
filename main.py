@@ -475,7 +475,7 @@ def load_data(uploaded_file):
 
 # Enhanced model training with multiple algorithms
 @st.cache_resource
-def load_models(df):
+def train_models(df):
     """Train multiple models and return the best one"""
     try:
         X = df.drop('Outcome', axis=1)
@@ -662,6 +662,125 @@ def make_enhanced_prediction(models, scaler, input_data, feature_names):
     except Exception as e:
         st.error(f"Error making prediction: {str(e)}")
         return None
+
+def get_risk_interpretation(probability, confidence):
+    """Generate risk interpretation based on probability and confidence"""
+    if confidence < 70:
+        reliability = "Low model agreement - consider additional testing"
+    elif confidence < 85:
+        reliability = "Moderate model agreement - results are fairly reliable"
+    else:
+        reliability = "High model agreement - results are highly reliable"
+    
+    if probability < 30:
+        interpretation = "Your health metrics suggest a low risk for diabetes. Continue maintaining healthy habits."
+    elif probability < 70:
+        interpretation = "You have moderate risk factors. Consider lifestyle modifications and regular monitoring."
+    else:
+        interpretation = "Multiple risk factors detected. Consult with healthcare provider for comprehensive evaluation."
+    
+    return f"{interpretation} {reliability}"
+
+def generate_recommendations(probability, input_data, feature_names, risk_factors):
+    """Generate personalized recommendations based on risk assessment"""
+    recommendations = []
+    
+    # Map input data to features
+    feature_dict = dict(zip(feature_names, input_data))
+    
+    # General recommendations based on risk level
+    if probability < 30:
+        recommendations.append({
+            'title': '✅ Maintain Current Lifestyle',
+            'description': 'Your risk is low. Continue with regular exercise, balanced diet, and routine health checkups.'
+        })
+    elif probability < 70:
+        recommendations.append({
+            'title': '⚠️ Moderate Risk - Take Action',
+            'description': 'Consider lifestyle modifications to reduce risk. Focus on diet, exercise, and weight management.'
+        })
+    else:
+        recommendations.append({
+            'title': '🔴 High Risk - Immediate Action Required',
+            'description': 'Strongly recommend consultation with healthcare provider. Immediate lifestyle changes needed.'
+        })
+    
+    # Specific recommendations based on individual metrics
+    if feature_dict['BMI'] > 30:
+        recommendations.append({
+            'title': '🏃 Weight Management Priority',
+            'description': 'Focus on gradual weight loss through caloric reduction and increased physical activity. Target BMI < 25.'
+        })
+    
+    if feature_dict['Glucose'] > 140:
+        recommendations.append({
+            'title': '🍎 Blood Sugar Control',
+            'description': 'Monitor carbohydrate intake, consider smaller frequent meals, and increase fiber consumption.'
+        })
+    
+    if feature_dict['BloodPressure'] > 90:
+        recommendations.append({
+            'title': '💓 Blood Pressure Management',
+            'description': 'Reduce sodium intake, increase potassium-rich foods, manage stress, and consider regular monitoring.'
+        })
+    
+    if feature_dict['Age'] > 45:
+        recommendations.append({
+            'title': '🕐 Age-Related Prevention',
+            'description': 'Increase screening frequency, focus on strength training, and maintain social connections.'
+        })
+    
+    # Always include general health recommendations
+    recommendations.append({
+        'title': '🌟 General Health Optimization',
+        'description': 'Maintain 7-9 hours of sleep, stay hydrated, manage stress, and schedule regular health screenings.'
+    })
+    
+    return recommendations
+
+def simulate_risk_timeline(input_data, models, scaler, feature_names):
+    """Simulate risk progression over time"""
+    timeline_data = []
+    
+    for years in range(0, 11):
+        # Simulate aging and potential health changes
+        modified_data = input_data.copy()
+        modified_data[7] += years  # Age increases
+        
+        # Simulate gradual health decline (conservative estimates)
+        if years > 0:
+            modified_data[1] += years * 0.5  # Slight glucose increase
+            modified_data[5] += years * 0.1   # Slight BMI increase
+            modified_data[2] += years * 0.3   # Slight BP increase
+        
+        # Make prediction
+        result = make_enhanced_prediction(models, scaler, modified_data, feature_names)
+        if result:
+            timeline_data.append({
+                'Years': years,
+                'Risk_Probability': result['ensemble_probability'] * 100
+            })
+    
+    return pd.DataFrame(timeline_data)
+
+def detect_outliers(df):
+    """Detect outliers using IQR method"""
+    outliers = {}
+    numeric_cols = df.select_dtypes(include=[np.number]).columns
+    
+    for col in numeric_cols:
+        if col != 'Outcome':
+            Q1 = df[col].quantile(0.25)
+            Q3 = df[col].quantile(0.75)
+            IQR = Q3 - Q1
+            lower_bound = Q1 - 1.5 * IQR
+            upper_bound = Q3 + 1.5 * IQR
+            
+            outlier_count = len(df[(df[col] < lower_bound) | (df[col] > upper_bound)])
+            if outlier_count > 0:
+                outliers[col] = outlier_count
+    
+    return outliers
 
 # Enhanced prediction page
 def show_enhanced_prediction_page(models, scaler, df, best_model_name):
@@ -912,106 +1031,6 @@ def show_enhanced_prediction_page(models, scaler, df, best_model_name):
                     font={'color': "white", 'family': "Inter"}
                 )
                 st.plotly_chart(fig_timeline, use_container_width=True)
-
-def get_risk_interpretation(probability, confidence):
-    """Generate risk interpretation based on probability and confidence"""
-    if confidence < 70:
-        reliability = "Low model agreement - consider additional testing"
-    elif confidence < 85:
-        reliability = "Moderate model agreement - results are fairly reliable"
-    else:
-        reliability = "High model agreement - results are highly reliable"
-    
-    if probability < 30:
-        interpretation = "Your health metrics suggest a low risk for diabetes. Continue maintaining healthy habits."
-    elif probability < 70:
-        interpretation = "You have moderate risk factors. Consider lifestyle modifications and regular monitoring."
-    else:
-        interpretation = "Multiple risk factors detected. Consult with healthcare provider for comprehensive evaluation."
-    
-    return f"{interpretation} {reliability}"
-
-def generate_recommendations(probability, input_data, feature_names, risk_factors):
-    """Generate personalized recommendations based on risk assessment"""
-    recommendations = []
-    
-    # Map input data to features
-    feature_dict = dict(zip(feature_names, input_data))
-    
-    # General recommendations based on risk level
-    if probability < 30:
-        recommendations.append({
-            'title': '✅ Maintain Current Lifestyle',
-            'description': 'Your risk is low. Continue with regular exercise, balanced diet, and routine health checkups.'
-        })
-    elif probability < 70:
-        recommendations.append({
-            'title': '⚠️ Moderate Risk - Take Action',
-            'description': 'Consider lifestyle modifications to reduce risk. Focus on diet, exercise, and weight management.'
-        })
-    else:
-        recommendations.append({
-            'title': '🔴 High Risk - Immediate Action Required',
-            'description': 'Strongly recommend consultation with healthcare provider. Immediate lifestyle changes needed.'
-        })
-    
-    # Specific recommendations based on individual metrics
-    if feature_dict['BMI'] > 30:
-        recommendations.append({
-            'title': '🏃 Weight Management Priority',
-            'description': 'Focus on gradual weight loss through caloric reduction and increased physical activity. Target BMI < 25.'
-        })
-    
-    if feature_dict['Glucose'] > 140:
-        recommendations.append({
-            'title': '🍎 Blood Sugar Control',
-            'description': 'Monitor carbohydrate intake, consider smaller frequent meals, and increase fiber consumption.'
-        })
-    
-    if feature_dict['BloodPressure'] > 90:
-        recommendations.append({
-            'title': '💓 Blood Pressure Management',
-            'description': 'Reduce sodium intake, increase potassium-rich foods, manage stress, and consider regular monitoring.'
-        })
-    
-    if feature_dict['Age'] > 45:
-        recommendations.append({
-            'title': '🕐 Age-Related Prevention',
-            'description': 'Increase screening frequency, focus on strength training, and maintain social connections.'
-        })
-    
-    # Always include general health recommendations
-    recommendations.append({
-        'title': '🌟 General Health Optimization',
-        'description': 'Maintain 7-9 hours of sleep, stay hydrated, manage stress, and schedule regular health screenings.'
-    })
-    
-    return recommendations
-
-def simulate_risk_timeline(input_data, models, scaler, feature_names):
-    """Simulate risk progression over time"""
-    timeline_data = []
-    
-    for years in range(0, 11):
-        # Simulate aging and potential health changes
-        modified_data = input_data.copy()
-        modified_data[7] += years  # Age increases
-        
-        # Simulate gradual health decline (conservative estimates)
-        if years > 0:
-            modified_data[1] += years * 0.5  # Slight glucose increase
-            modified_data[5] += years * 0.1   # Slight BMI increase
-            modified_data[2] += years * 0.3   # Slight BP increase
-        
-        # Make prediction
-        result = make_enhanced_prediction(models, scaler, modified_data, feature_names)
-        if result:
-            timeline_data.append({
-                'Years': years,
-                'Risk_Probability': result['ensemble_probability'] * 100
-            })
-    
-    return pd.DataFrame(timeline_data)
 
 # Enhanced data analysis page
 def show_enhanced_data_analysis_page(df, stats, feature_analysis):
@@ -1352,25 +1371,6 @@ def show_enhanced_data_analysis_page(df, stats, feature_analysis):
         )
         st.plotly_chart(fig_trends, use_container_width=True)
 
-def detect_outliers(df):
-    """Detect outliers using IQR method"""
-    outliers = {}
-    numeric_cols = df.select_dtypes(include=[np.number]).columns
-    
-    for col in numeric_cols:
-        if col != 'Outcome':
-            Q1 = df[col].quantile(0.25)
-            Q3 = df[col].quantile(0.75)
-            IQR = Q3 - Q1
-            lower_bound = Q1 - 1.5 * IQR
-            upper_bound = Q3 + 1.5 * IQR
-            
-            outlier_count = len(df[(df[col] < lower_bound) | (df[col] > upper_bound)])
-            if outlier_count > 0:
-                outliers[col] = outlier_count
-    
-    return outliers
-
 # Enhanced model insights page
 def show_enhanced_model_insights_page(models, best_model_name, df):
     """Enhanced model insights with comprehensive evaluation"""
@@ -1566,7 +1566,7 @@ def show_enhanced_model_insights_page(models, best_model_name, df):
         # Prediction distribution
         st.markdown("#### Prediction Distribution")
         prob_df = pd.DataFrame({
-                        'Probability': test_prob,
+            'Probability': test_prob,
             'Actual': y_test.values
         })
         
@@ -1741,92 +1741,6 @@ def show_enhanced_about_page():
     This project is open-source and available under the MIT License.
     """)
 
-# Main application function
-def main():
-    """Main application function"""
-    # Inject CSS
-    inject_css()
-    
-    # App title
-    st.markdown('<h1 class="main-header">Advanced Diabetes Prediction System</h1>', unsafe_allow_html=True)
-    
-    # Initialize session state
-    if 'df' not in st.session_state:
-        st.session_state.df = None
-    if 'models' not in st.session_state:
-        st.session_state.models = None
-    if 'best_model' not in st.session_state:
-        st.session_state.best_model = None
-    if 'scaler' not in st.session_state:
-        st.session_state.scaler = None
-    
-    # Sidebar with file upload
-    with st.sidebar:
-        st.markdown("## 🧭 Navigation")
-        page = st.radio(
-            "Select Page:",
-            ["🏠 Home", "🎯 Risk Assessment", "📊 Data Analysis", "🔍 Model Insights", "ℹ️ About"],
-            label_visibility="collapsed"
-        )
-        
-        st.markdown("---")
-        st.markdown("## 📁 Data Upload")
-        
-        uploaded_file = st.file_uploader(
-            "Upload your diabetes dataset (CSV)",
-            type=["csv"],
-            help="Dataset should include standard diabetes features"
-        )
-        
-        if uploaded_file is not None:
-            with st.spinner("Loading and validating data..."):
-                st.session_state.df = load_data(uploaded_file)
-                
-                # Train models if not already trained
-                if st.session_state.models is None:
-                    with st.spinner("Training machine learning models..."):
-                        st.session_state.models, st.session_state.best_model, st.session_state.scaler = load_models(st.session_state.df)
-        
-        st.markdown("---")
-        st.markdown("## ℹ️ Information")
-        st.markdown("""
-        This application uses machine learning to predict diabetes risk based on health indicators.
-        
-        **Sample Data Format:**
-        ```
-        Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin,BMI,DiabetesPedigreeFunction,Age,Outcome
-        6,148,72,35,0,33.6,0.627,50,1
-        1,85,66,29,0,26.6,0.351,31,0
-        ```
-        """)
-    
-    # Page routing
-    if page == "🏠 Home":
-        show_home_page()
-    elif page == "🎯 Risk Assessment" and st.session_state.df is not None:
-        show_enhanced_prediction_page(
-            st.session_state.models,
-            st.session_state.scaler,
-            st.session_state.df,
-            st.session_state.best_model
-        )
-    elif page == "📊 Data Analysis" and st.session_state.df is not None:
-        stats = get_comprehensive_stats(st.session_state.df)
-        feature_analysis = get_comprehensive_feature_analysis(st.session_state.df, st.session_state.models)
-        show_enhanced_data_analysis_page(st.session_state.df, stats, feature_analysis)
-    elif page == "🔍 Model Insights" and st.session_state.models is not None:
-        show_enhanced_model_insights_page(
-            st.session_state.models,
-            st.session_state.best_model,
-            st.session_state.df
-        )
-    elif page == "ℹ️ About":
-        show_enhanced_about_page()
-    else:
-        if page != "🏠 Home":
-            st.warning("Please upload a dataset to access this page")
-        show_home_page()
-
 def show_home_page():
     """Show the home/welcome page"""
     st.markdown("""
@@ -1901,6 +1815,91 @@ def show_home_page():
     </div>
     """, unsafe_allow_html=True)
 
+# Main application function
+def main():
+    """Main application function"""
+    # Inject CSS
+    inject_css()
+    
+    # App title
+    st.markdown('<h1 class="main-header">Advanced Diabetes Prediction System</h1>', unsafe_allow_html=True)
+    
+    # Initialize session state
+    if 'df' not in st.session_state:
+        st.session_state.df = None
+    if 'models' not in st.session_state:
+        st.session_state.models = None
+    if 'best_model' not in st.session_state:
+        st.session_state.best_model = None
+    if 'scaler' not in st.session_state:
+        st.session_state.scaler = None
+    
+    # Sidebar with file upload
+    with st.sidebar:
+        st.markdown("## 🧭 Navigation")
+        page = st.radio(
+            "Select Page:",
+            ["🏠 Home", "🎯 Risk Assessment", "📊 Data Analysis", "🔍 Model Insights", "ℹ️ About"],
+            label_visibility="collapsed"
+        )
+        
+        st.markdown("---")
+        st.markdown("## 📁 Data Upload")
+        
+        uploaded_file = st.file_uploader(
+            "Upload your diabetes dataset (CSV)",
+            type=["csv"],
+            help="Dataset should include standard diabetes features"
+        )
+        
+        if uploaded_file is not None:
+            with st.spinner("Loading and validating data..."):
+                st.session_state.df = load_data(uploaded_file)
+                
+                # Train models if not already trained
+                if st.session_state.models is None:
+                    with st.spinner("Training machine learning models..."):
+                        st.session_state.models, st.session_state.best_model, st.session_state.scaler = train_models(st.session_state.df)
+        
+        st.markdown("---")
+        st.markdown("## ℹ️ Information")
+        st.markdown("""
+        This application uses machine learning to predict diabetes risk based on health indicators.
+        
+        **Sample Data Format:**
+        ```
+        Pregnancies,Glucose,BloodPressure,SkinThickness,Insulin,BMI,DiabetesPedigreeFunction,Age,Outcome
+        6,148,72,35,0,33.6,0.627,50,1
+        1,85,66,29,0,26.6,0.351,31,0
+        ```
+        """)
+    
+    # Page routing
+    if page == "🏠 Home":
+        show_home_page()
+    elif page == "🎯 Risk Assessment" and st.session_state.df is not None:
+        show_enhanced_prediction_page(
+            st.session_state.models,
+            st.session_state.scaler,
+            st.session_state.df,
+            st.session_state.best_model
+        )
+    elif page == "📊 Data Analysis" and st.session_state.df is not None:
+        stats = get_comprehensive_stats(st.session_state.df)
+        feature_analysis = get_comprehensive_feature_analysis(st.session_state.df, st.session_state.models)
+        show_enhanced_data_analysis_page(st.session_state.df, stats, feature_analysis)
+    elif page == "🔍 Model Insights" and st.session_state.models is not None:
+        show_enhanced_model_insights_page(
+            st.session_state.models,
+            st.session_state.best_model,
+            st.session_state.df
+        )
+    elif page == "ℹ️ About":
+        show_enhanced_about_page()
+    else:
+        if page != "🏠 Home":
+            st.warning("Please upload a dataset to access this page")
+        show_home_page()
+
 if __name__ == "__main__":
     main()
-
