@@ -552,7 +552,6 @@ def train_models(df):
         st.stop()
 
 # Enhanced feature importance with SHAP-like analysis
-@st.cache_data
 def get_comprehensive_feature_analysis(df, model_results):
     """Get comprehensive feature analysis"""
     try:
