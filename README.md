@@ -63,3 +63,7 @@ source venv/bin/activate  # On Windows use: venv\Scripts\activate
 
 # Install required packages
 pip install -r requirements.txt
+
+
+## To get Dataset link:
+https://www.kaggle.com/datasets/uciml/pima-indians-diabetes-database
