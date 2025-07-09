@@ -1,3 +1,8 @@
+![scrnli_uJvQu91v9r7bC7](https://github.com/user-attachments/assets/ad90107f-38ae-4955-9bc7-599d4bc9af7e)
+
+# Live Dmo in Web App:
+https://diabetes-prediction-model-mfgjwh33hgdvvncz4bdijq.streamlit.app/
+
 # 🩺 Advanced Diabetes Prediction System
 
 > A professional-grade Streamlit web application that uses machine learning to assess diabetes risk based on health metrics.
